@@ -3,7 +3,7 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
-
+const axios = require('axios');
 
 public_users.post("/register", (req, res) => {
   const { username, password } = req.body;
@@ -68,5 +68,56 @@ public_users.get('/review/:isbn', function (req, res) {
   const isbm = books[req.params.isbn];
   res.send(isbm.reviews);
 });
+
+// Function to fetch book list using async-await
+async function getBookListAsync(url) {
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    throw error; // Re-throw the error for handling in the route
+  }
+}
+
+public_users.get('/async', async function (req, res) {
+  try {
+    const bookList = await getBookListAsync('http://localhost:5000/'); //
+    res.json(bookList);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error retrieving book list" });
+  }
+});
+
+public_users.get('/async/isbn/:isbn', async function (req, res) {
+  try {
+    const isbn = req.params.isbn;
+    const book = await getBookListAsync(`http://localhost:5000/isbn/${isbn}`);
+    res.json(book);
+  } catch (e) {
+    res.status(500).json({ message: "Error retrieving book details" });
+  }
+});
+
+public_users.get('/async/author/:author', async function (req, res) {
+  try {
+    const author = req.params.author;
+    const book = await getBookListAsync(`http://localhost:5000/author/${author}`);
+    res.json(book);
+  } catch (e) {
+    res.status(500).json({ message: "Error retrieving book details" });
+  }
+});
+
+public_users.get('/async/title/:title', async function (req, res) {
+  try {
+    const title = req.params.title;
+    const book = await getBookListAsync(`http://localhost:5000/title/${title}`);
+    res.json(book);
+  } catch (e) {
+    res.status(500).json({ message: "Error retrieving book details" });
+  }
+});
+
 
 module.exports.general = public_users;
